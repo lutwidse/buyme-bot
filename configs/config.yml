@@ -1,0 +1,14 @@
+twocaptcha:
+  token: redacted
+discord:
+  token: redacted
+  channel_id: redacted
+  role_id: redacted
+openai:
+  token: redacted
+# Assumes the use of Proxy-Cheap. well written in /pkg/proxy/proxy.go
+proxy:
+  host: proxy.proxy-cheap.com
+  port:  '31112'
+  user:  redacted
+  password: redacted

@@ -14,8 +14,8 @@ import (
 )
 
 type Proxy struct {
-	Logger       *zap.SugaredLogger
-	ConfigClient *config.ConfigClient
+	Logger *zap.SugaredLogger
+	Config *config.Config
 }
 
 func (p *Proxy) generateRandomString() string {
@@ -43,7 +43,7 @@ func (p *Proxy) GetSessionProxy(country string) string {
 	e := map[string]string{
 		"connection": "not_ssl",
 		"country":    country,
-		"password":   p.ConfigClient.Config.Proxy.Password,
+		"password":   p.Config.ConfigData.Proxy.Password,
 		"session":    "sticky",
 	}
 
@@ -53,5 +53,5 @@ func (p *Proxy) GetSessionProxy(country string) string {
 }
 
 func (p *Proxy) GetSessionProxyURL(country string) string {
-	return p.ConfigClient.Config.Proxy.User + ":" + p.GetSessionProxy(country) + "@" + p.ConfigClient.Config.Proxy.Host + ":" + p.ConfigClient.Config.Proxy.Port
+	return p.Config.ConfigData.Proxy.User + ":" + p.GetSessionProxy(country) + "@" + p.Config.ConfigData.Proxy.Host + ":" + p.Config.ConfigData.Proxy.Port
 }

@@ -8,12 +8,12 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-type ConfigClient struct {
+type Config struct {
 	Logger *zap.SugaredLogger
-	Config *Config
+	ConfigData *ConfigData
 }
 
-type Config struct {
+type ConfigData struct {
 	TwoCaptcha struct {
 		Token string `yaml:"token"`
 	} `yaml:"twocaptcha"`
@@ -33,7 +33,7 @@ type Config struct {
 	} `yaml:"proxy"`
 }
 
-func (c *ConfigClient) LoadConfig() error {
+func (c *Config) LoadConfig() error {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		c.Logger.Errorf("Failed to get current directory: %v", err)
@@ -46,7 +46,7 @@ func (c *ConfigClient) LoadConfig() error {
 		return err
 	}
 
-	err = yaml.Unmarshal(data, c.Config)
+	err = yaml.Unmarshal(data, c)
 	if err != nil {
 		return err
 	}

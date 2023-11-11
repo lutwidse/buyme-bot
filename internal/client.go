@@ -10,11 +10,11 @@ import (
 )
 
 type ClientFactory struct {
-	Logger        *zap.SugaredLogger
-	ConfigClient  *config.ConfigClient
-	ProxyClient   *proxy.Proxy
-	UtilClient    *util.Util
-	CaptchaClient *captcha.Client
+	Logger  *zap.SugaredLogger
+	Config  *config.Config
+	Proxy   *proxy.Proxy
+	Util    *util.Util
+	Captcha *captcha.Client
 }
 
 func NewClientFactory(logger *zap.SugaredLogger) *ClientFactory {
@@ -24,26 +24,26 @@ func NewClientFactory(logger *zap.SugaredLogger) *ClientFactory {
 }
 
 func (cf *ClientFactory) Init() {
-	cf.ConfigClient = cf.newConfigClient()
-	cf.ProxyClient = cf.newProxyClient()
-	cf.UtilClient = cf.newUtilClient()
-	cf.CaptchaClient = cf.newCaptchaClient()
+	cf.Config = cf.newConfig()
+	cf.Proxy = cf.newProxy()
+	cf.Util = cf.newUtil()
+	cf.Captcha = cf.newCaptcha()
 }
 
-func (cf *ClientFactory) newConfigClient() *config.ConfigClient {
-	configClient := &config.ConfigClient{Logger: cf.Logger, Config: &config.Config{}}
-	configClient.LoadConfig()
-	return configClient
+func (cf *ClientFactory) newConfig() *config.Config {
+	Config := &config.Config{Logger: cf.Logger, ConfigData: &config.ConfigData{}}
+	Config.LoadConfig()
+	return Config
 }
 
-func (cf *ClientFactory) newProxyClient() *proxy.Proxy {
-	return &proxy.Proxy{Logger: cf.Logger, ConfigClient: cf.ConfigClient}
+func (cf *ClientFactory) newProxy() *proxy.Proxy {
+	return &proxy.Proxy{Logger: cf.Logger, Config: cf.Config}
 }
 
-func (cf *ClientFactory) newUtilClient() *util.Util {
+func (cf *ClientFactory) newUtil() *util.Util {
 	return &util.Util{Logger: cf.Logger}
 }
 
-func (cf *ClientFactory) newCaptchaClient() *captcha.Client {
-	return captcha.NewClient(cf.ConfigClient.Config.TwoCaptcha.Token)
+func (cf *ClientFactory) newCaptcha() *captcha.Client {
+	return captcha.NewClient(cf.Config.ConfigData.TwoCaptcha.Token)
 }

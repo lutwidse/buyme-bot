@@ -17,8 +17,8 @@ type Util struct {
 	result map[string]interface{}
 }
 
-// CheckRecaptcha returns recaptcha parameters and true if recaptcha is present. otherwise false. We consider SEC uses only Cloudflare.
-func (u *Util) CheckRecaptcha(url string) (map[string]interface{}, error) {
+// CheckCloudFlareRecaptcha returns recaptcha parameters and true if recaptcha is present. otherwise false. We consider SEC uses only Cloudflare.
+func (u *Util) CheckCloudFlareRecaptcha(url string) (map[string]interface{}, error) {
 	pw, err := playwright.Run()
 	if err != nil {
 		u.Logger.Errorf("could not start playwright: %v", err)

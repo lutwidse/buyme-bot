@@ -8,8 +8,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: Separate the code to internal.
-// TODO: Change the temporary code.
+// TODO: Separate code to internal.
+// TODO: Change temporary code.
 
 func main() {
 	logger, err := zap.NewProduction()
@@ -21,7 +21,7 @@ func main() {
 
 	buymeClient := client.NewClientFactory(sugar)
 
-	result, err := buymeClient.UtilClient.CheckRecaptcha("https://nopecha.com/demo/cloudflare")
+	result, err := buymeClient.Util.CheckCloudFlareRecaptcha("https://nopecha.com/demo/cloudflare")
 	if err != nil {
 		sugar.Errorf("Recaptcha check failed: %v", err)
 		return
@@ -48,18 +48,18 @@ func main() {
 			UserAgent: userAgent,
 		}
 
-		sessionProxy := buymeClient.ProxyClient.GetSessionProxyURL("Japan")
+		sessionProxy := buymeClient.Proxy.GetSessionProxyURL("Japan")
 
 		req := cap.ToRequest()
 		req.SetProxy("HTTP", sessionProxy)
 
-		code, err := buymeClient.CaptchaClient.Send(req)
+		code, err := buymeClient.Captcha.Send(req)
 		if err != nil {
 			sugar.Errorf("Failed to send captcha: %v", err)
 			return
 		}
 
-		captchaResult, err := buymeClient.CaptchaClient.WaitForResult(code, 60, 15)
+		captchaResult, err := buymeClient.Captcha.WaitForResult(code, 60, 15)
 		if err != nil {
 			sugar.Errorf("Failed to wait for captcha result: %v", err)
 			return
@@ -79,18 +79,18 @@ func main() {
 			Url:     pageurl,
 		}
 
-		sessionProxy := buymeClient.ProxyClient.GetSessionProxyURL("Japan")
+		sessionProxy := buymeClient.Proxy.GetSessionProxyURL("Japan")
 
 		req := cap.ToRequest()
 		req.SetProxy("HTTP", sessionProxy)
 
-		code, err := buymeClient.CaptchaClient.Send(req)
+		code, err := buymeClient.Captcha.Send(req)
 		if err != nil {
 			sugar.Errorf("Failed to send captcha: %v", err)
 			return
 		}
 
-		captchaResult, err := buymeClient.CaptchaClient.WaitForResult(code, 60, 15)
+		captchaResult, err := buymeClient.Captcha.WaitForResult(code, 60, 15)
 		if err != nil {
 			sugar.Errorf("Failed to wait for captcha result: %v", err)
 			return

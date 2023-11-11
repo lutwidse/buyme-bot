@@ -34,22 +34,22 @@ type ConfigData struct {
 }
 
 func (c *Config) LoadConfig() error {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		c.Logger.Errorf("Failed to get current directory: %v", err)
-		return err
-	}
-	configPath := filepath.Join(currentDir, "..", "configs", "config.yml")
+    currentDir, err := os.Getwd()
+    if err != nil {
+        c.Logger.Errorf("Failed to get current directory: %v", err)
+        return err
+    }
+    configPath := filepath.Join(currentDir, "..", "configs", "config.yml")
 
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		return err
-	}
+    data, err := os.ReadFile(configPath)
+    if err != nil {
+        return err
+    }
 
-	err = yaml.Unmarshal(data, c)
-	if err != nil {
-		return err
-	}
+    err = yaml.Unmarshal(data, c.ConfigData)
+    if err != nil {
+        return err
+    }
 
-	return nil
+    return nil
 }

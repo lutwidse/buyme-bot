@@ -18,9 +18,9 @@ type ClientFactory struct {
 }
 
 func NewClientFactory(logger *zap.SugaredLogger) *ClientFactory {
-	return &ClientFactory{
-		Logger: logger,
-	}
+	cf := ClientFactory{Logger: logger}
+	cf.Init()
+	return &cf
 }
 
 func (cf *ClientFactory) Init() {

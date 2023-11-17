@@ -9,6 +9,8 @@ openai:
 # Assumes the use of Proxy-Cheap. well written in /pkg/proxy/proxy.go
 proxy:
   host: proxy.proxy-cheap.com
-  port:  '31112'
+  port:  31112
   user:  redacted
   password: redacted
+setting:
+  user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36

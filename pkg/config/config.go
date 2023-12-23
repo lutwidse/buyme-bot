@@ -31,6 +31,9 @@ type ConfigData struct {
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`
 	} `yaml:"proxy"`
+	Setting struct {
+		UserAgent string `yaml:"user_agent"`
+	}
 }
 
 func (c *Config) LoadConfig() error {

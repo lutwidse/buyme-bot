@@ -15,7 +15,7 @@ func TestCloudFlareFailCase(t *testing.T) {
 	utilClient := &util.Util{
 		Logger: sugar,
 	}
-	result, err := utilClient.CheckCloudFlareRecaptcha("https://nopecha.com/demo/turnstile")
+	result, err := utilClient.CheckCloudFlareRecaptcha("https://google.com")
 	if err != nil {
 		sugar.Errorf("Recaptcha check failed: %v", err)
 	} else {

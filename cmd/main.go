@@ -129,8 +129,11 @@ func monitorEdgar(client *client.ClientFactory) {
 				rootFormURL := fmt.Sprintf("https://www.sec.gov/Archives/edgar/data/%s/%s/%s", cik[3:], idParamWhat, idParamName)
 
 				fileDateTime, err := time.Parse("2006-01-02", fileDate)
+				if err != nil {
+					client.Logger.Errorf("Failed to parse date: %v", err)
+					continue
+				}
 				startdtTime, err := time.Parse("2006-01-02", startdt)
-
 				if err != nil {
 					client.Logger.Errorf("Failed to parse date: %v", err)
 					continue

@@ -6,6 +6,7 @@ import (
 	"buyme-bot/pkg/proxy"
 	"buyme-bot/pkg/util"
 
+	"github.com/bwmarrin/discordgo"
 	"go.uber.org/zap"
 )
 
@@ -15,6 +16,7 @@ type ClientFactory struct {
 	Proxy   *proxy.Proxy
 	Util    *util.Util
 	Captcha *captcha.Client
+	Discord *discordgo.Session
 }
 
 func NewClientFactory(logger *zap.SugaredLogger) *ClientFactory {
@@ -28,6 +30,7 @@ func (cf *ClientFactory) Init() {
 	cf.Proxy = cf.newProxy()
 	cf.Util = cf.newUtil()
 	cf.Captcha = cf.newCaptcha()
+	cf.Discord = cf.newDiscord()
 }
 
 func (cf *ClientFactory) newConfig() *config.Config {
@@ -46,4 +49,10 @@ func (cf *ClientFactory) newUtil() *util.Util {
 
 func (cf *ClientFactory) newCaptcha() *captcha.Client {
 	return captcha.NewClient(cf.Config.ConfigData.TwoCaptcha.Token)
+}
+
+func (cf *ClientFactory) newDiscord() *discordgo.Session {
+	discord, _ := discordgo.New("Bot " + cf.Config.ConfigData.Discord.Token)
+
+	return discord
 }

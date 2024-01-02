@@ -2,8 +2,7 @@ package main
 
 import (
 	client "buyme-bot/internal"
-	"buyme-bot/pkg/captcha"
-	"log"
+	"flag"
 
 	"go.uber.org/zap"
 )
@@ -12,20 +11,11 @@ import (
 // TODO: Change temporary code.
 
 func main() {
-	logger, err := zap.NewProduction()
-	if err != nil {
-		log.Fatalf("Failed to create logger: %v", err)
-	}
-
-	sugar := logger.Sugar()
-
-	buymeClient := client.NewClientFactory(sugar)
-
-	result, err := buymeClient.Util.CheckCloudFlareRecaptcha("https://nopecha.com/demo/cloudflare")
-	if err != nil {
-		sugar.Errorf("Recaptcha check failed: %v", err)
-		return
-	}
+	debug := flag.Bool("debug", false, "enable debug mode")
+	flag.Parse()
+	buymeClient := client.NewClientFactory(*debug)
+	monitorEdgar(buymeClient)
+}
 
 	if len(result) > 3 {
 		handleChallengePage(result, buymeClient, sugar)

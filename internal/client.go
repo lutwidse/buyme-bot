@@ -5,6 +5,7 @@ import (
 	"buyme-bot/pkg/config"
 	"buyme-bot/pkg/proxy"
 	"buyme-bot/pkg/util"
+	"log"
 
 	"github.com/bwmarrin/discordgo"
 	"go.uber.org/zap"
@@ -19,10 +20,25 @@ type ClientFactory struct {
 	Discord *discordgo.Session
 }
 
-func NewClientFactory(logger *zap.SugaredLogger) *ClientFactory {
-	cf := ClientFactory{Logger: logger}
+func NewClientFactory(debug bool) *ClientFactory {
+	var logger *zap.Logger
+	var err error
+
+	if debug {
+		logger, err = zap.NewDevelopment()
+	} else {
+		logger, err = zap.NewProduction()
+	}
+
+	if err != nil {
+		log.Fatalf("Failed to create logger: %v", err)
+	}
+
+	sugar := logger.Sugar()
+
+	cf := &ClientFactory{Logger: sugar}
 	cf.Init()
-	return &cf
+	return cf
 }
 
 func (cf *ClientFactory) Init() {

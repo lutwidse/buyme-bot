@@ -99,7 +99,7 @@ func monitorEdgar(client *client.ClientFactory) {
 			But it's okay, we're checking if start date is before file date.
 			We don't want to miss any update.
 		*/
-		if len(processedItems) == 0 {
+		if len(processedItems) == 1 {
 			for _, item := range result.Hits.Hits {
 				processedItems[item.ID] = true
 				client.Logger.Debugf("Added to processed (init): %s", item.ID)
@@ -187,6 +187,20 @@ func monitorEdgar(client *client.ClientFactory) {
 								Value: filmNum,
 							},
 						},
+					}
+
+					mentionEmbed := &discordgo.MessageEmbed{
+						Title: "EDGAR FILE LISTED 📔 ✅",
+						Color: 0x5865F2,
+					}
+
+					_, err := client.Discord.ChannelMessageSendEmbed(client.Config.ConfigData.Discord.ChannelID, mentionEmbed)
+					if err != nil {
+						client.Logger.Errorf("Error sending mentionEmbed message: ", err)
+					}
+					_, err = client.Discord.ChannelMessageSend(client.Config.ConfigData.Discord.ChannelID, fmt.Sprintf("<@&%s>", client.Config.ConfigData.Discord.RoleID))
+					if err != nil {
+						client.Logger.Errorf("Error sending mention message: ", err)
 					}
 
 					// We use ChannelMessageSendEmbed instead of Embeds because both functions handle Embeds one by one.

@@ -2,13 +2,42 @@ package main
 
 import (
 	client "buyme-bot/internal"
+	"encoding/json"
 	"flag"
+	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
 
-	"go.uber.org/zap"
+	"github.com/bwmarrin/discordgo"
 )
 
 // TODO: Separate code to internal.
 // TODO: Change temporary code.
+
+type Source struct {
+	DisplayNames []string `json:"display_names"`
+	RootForm     string   `json:"root_form"`
+	FileDate     string   `json:"file_date"`
+	Ciks         []string `json:"ciks"`
+	BizLocations []string `json:"biz_locations"`
+	FileNum      []string `json:"file_num"`
+	FilmNum      []string `json:"film_num"`
+}
+
+type Item struct {
+	ID     string `json:"_id"`
+	Source Source `json:"_source"`
+}
+
+type Hits struct {
+	Hits []Item `json:"hits"`
+}
+
+type Response struct {
+	Hits Hits `json:"hits"`
+}
 
 func main() {
 	debug := flag.Bool("debug", false, "enable debug mode")
@@ -17,76 +46,166 @@ func main() {
 	monitorEdgar(buymeClient)
 }
 
-	if len(result) > 3 {
-		handleChallengePage(result, buymeClient, sugar)
-	} else {
-		handleStandalone(result, buymeClient, sugar)
+func monitorEdgar(client *client.ClientFactory) {
+	processedItems := make(map[string]bool)
+
+	loop := func(startdt string, enddt string) {
+		urlStr := fmt.Sprintf("https://efts.sec.gov/LATEST/search-index?q=BTC&dateRange=custom&startdt=%s&enddt=%s", startdt, enddt)
+		req, err := http.NewRequest("GET", urlStr, nil)
+		if err != nil {
+			client.Logger.Errorf("Failed to create request: %v", err)
+			return
+		}
+		req.Header.Set("User-Agent", client.Config.ConfigData.Setting.UserAgent)
+
+		proxyURL, err := url.Parse("http://" + client.Config.ConfigData.Proxy.Host + ":" + client.Config.ConfigData.Proxy.Port)
+		if err != nil {
+			client.Logger.Errorf("Failed to parse proxy URL: %v", err)
+			return
+		}
+
+		proxyURL.User = url.UserPassword(client.Config.ConfigData.Proxy.User, client.Proxy.GetSessionProxy("Japan"))
+
+		httpClient := &http.Client{
+			Transport: &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			},
+		}
+
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			client.Logger.Errorf("Failed to send request: %v", err)
+			return
+		}
+		if resp.StatusCode != 200 {
+			client.Logger.Errorf("Failed to get response: %v", resp.StatusCode)
+			return
+		}
+
+		var result Response
+
+		err = json.NewDecoder(resp.Body).Decode(&result)
+		if err != nil {
+			client.Logger.Errorf("Failed to decode response body: %v", err)
+			return
+		}
+
+		defer resp.Body.Close()
+
+		/*
+			Initialize processedItems only once to prevent notifications on the first run.
+			This is called only once. even if all the loops within an hour complete, it will NEVER be called next time.
+			Their API weirdly returns the previous items that are not in the date range we passed.
+			But it's okay, we're checking if start date is before file date.
+			We don't want to miss any update.
+		*/
+		if len(processedItems) == 0 {
+			for _, item := range result.Hits.Hits {
+				processedItems[item.ID] = true
+				client.Logger.Debugf("Added to processed (init): %s", item.ID)
+			}
+		}
+
+		for _, item := range result.Hits.Hits {
+			_source := item.Source
+			for j := range _source.DisplayNames {
+				client.Logger.Debugf("ID: %s", item.ID)
+
+				if processedItems[item.ID] {
+					client.Logger.Debugf("Already processed: %s", item.ID)
+					continue
+				}
+
+				_ids := strings.Split(item.ID, ":")
+
+				rootForm := _source.RootForm
+				fileDate := _source.FileDate
+				displayName := _source.DisplayNames[j]
+				cik := _source.Ciks[j]
+				bizLocation := _source.BizLocations[j]
+
+				idParamWhat := strings.ReplaceAll(_ids[0], "-", "")
+				idParamName := _ids[1]
+				rootFormURL := fmt.Sprintf("https://www.sec.gov/Archives/edgar/data/%s/%s/%s", cik[3:], idParamWhat, idParamName)
+
+				fileDateTime, err := time.Parse("2006-01-02", fileDate)
+				startdtTime, err := time.Parse("2006-01-02", startdt)
+
+				if err != nil {
+					client.Logger.Errorf("Failed to parse date: %v", err)
+					continue
+				}
+
+				if fileDateTime.Before(startdtTime) {
+					client.Logger.Debugf("File date is before start date: %v", fileDateTime)
+					continue
+				}
+
+				if _source.RootForm != "S-1" {
+					client.Logger.Debugf("Root form is not S-1: %v", _source.RootForm)
+					continue
+				}
+
+				for i := 0; i < len(_source.FileNum); i++ {
+					fileNum := _source.FileNum[i]
+					filmNum := _source.FilmNum[i]
+					fileNumURL := fmt.Sprintf("https://www.sec.gov/cgi-bin/browse-edgar/?filenum=%s&action=getcompany", fileNum)
+
+					client.Logger.Debugf("rootForm: %s, fileDate: %s, displayName: %s, cik: %s, bizLocation: %s, fileNum: %s, filmNum: %s, rootFormURL: %s, fileNumURL: %s", rootForm, fileDate, displayName, cik, bizLocation, fileNum, filmNum, rootFormURL, fileNumURL)
+
+					embed := &discordgo.MessageEmbed{
+						Fields: []*discordgo.MessageEmbedField{
+							{
+								Name:  "Form & File",
+								Value: fmt.Sprintf("[%s](%s)", rootForm, rootFormURL),
+							},
+							{
+								Name:  "Filed",
+								Value: fileDate,
+							},
+							{
+								Name:  "Filing entity/person",
+								Value: displayName,
+							},
+							{
+								Name:  "CIKS",
+								Value: cik,
+							},
+							{
+								Name:  "Located",
+								Value: bizLocation,
+							},
+							{
+								Name:  "File number",
+								Value: fmt.Sprintf("[%s](%s)", fileNum, fileNumURL),
+							},
+							{
+								Name:  "Film number",
+								Value: filmNum,
+							},
+						},
+					}
+
+					// We use ChannelMessageSendEmbed instead of Embeds because both functions handle Embeds one by one.
+					_, err = client.Discord.ChannelMessageSendEmbed(client.Config.ConfigData.Discord.ChannelID, embed)
+					if err != nil {
+						client.Logger.Errorf("Error sending embed: ", err)
+					}
+					processedItems[item.ID] = true
+					client.Logger.Debugf("Added to processed: %s", item.ID)
+				}
+			}
+		}
 	}
-}
 
-func handleChallengePage(result map[string]interface{}, buymeClient *client.ClientFactory, sugar *zap.SugaredLogger) {
-	sugar.Infof("Captcha Type: Challenge Page")
+	for {
+		now := time.Now()
+		startdt := now.AddDate(0, 0, -30).Format("2006-01-02")
+		enddt := now.AddDate(0, 0, 1).Format("2006-01-02")
 
-	sitekey, _ := result["sitekey"].(string)
-	pageurl, _ := result["pageurl"].(string)
-	data, _ := result["data"].(string)
-	pagedata, _ := result["pagedata"].(string)
-	action, _ := result["action"].(string)
-	userAgent, _ := result["userAgent"].(string)
-	sugar.Infof("Site Key: %s, Page URL: %s, Data: %s, Page Data: %s, Action: %s, User Agent: %s",
-		sitekey, pageurl, data, pagedata, action, userAgent)
-
-	cap := captcha.CloudflareTurnstile{
-		SiteKey:   sitekey,
-		Url:       pageurl,
-		Data:      data,
-		PageData:  pagedata,
-		Action:    action,
-		UserAgent: userAgent,
+		for i := 0; i < 60*60; i++ {
+			loop(startdt, enddt)
+			time.Sleep(1 * time.Second)
+		}
 	}
-
-	req := createCaptchaRequest(cap, buymeClient)
-	sendCaptchaRequest(req, buymeClient, sugar)
-}
-
-func handleStandalone(result map[string]interface{}, buymeClient *client.ClientFactory, sugar *zap.SugaredLogger) {
-	sugar.Infof("Captcha Type: Standalone")
-
-	sitekey, _ := result["sitekey"].(string)
-	pageurl, _ := result["pageurl"].(string)
-	userAgent, _ := result["userAgent"].(string)
-	sugar.Infof("Site Key: %s, Page URL: %s, User Agent: %s",
-		sitekey, pageurl, userAgent)
-
-	cap := captcha.CloudflareTurnstile{
-		SiteKey: sitekey,
-		Url:     pageurl,
-	}
-
-	req := createCaptchaRequest(cap, buymeClient)
-	sendCaptchaRequest(req, buymeClient, sugar)
-}
-
-func createCaptchaRequest(cap captcha.CloudflareTurnstile, buymeClient *client.ClientFactory) *captcha.Request {
-    sessionProxy := buymeClient.Proxy.GetSessionProxyURL("Japan")
-
-    req := cap.ToRequest()
-    req.SetProxy("HTTP", sessionProxy)
-
-    return &req
-}
-
-func sendCaptchaRequest(req *captcha.Request, buymeClient *client.ClientFactory, sugar *zap.SugaredLogger) {
-	code, err := buymeClient.Captcha.Send(*req)
-	if err != nil {
-		sugar.Errorf("Failed to send captcha: %v", err)
-		return
-	}
-
-	captchaResult, err := buymeClient.Captcha.WaitForResult(code, 60, 15)
-	if err != nil {
-		sugar.Errorf("Failed to wait for captcha result: %v", err)
-		return
-	}
-	sugar.Infof("Captcha Result: %s", captchaResult)
 }

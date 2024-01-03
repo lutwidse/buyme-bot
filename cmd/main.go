@@ -17,14 +17,16 @@ import (
 // TODO: Change temporary code.
 
 type Source struct {
-	DisplayNames []string `json:"display_names"`
-	RootForm     string   `json:"root_form"`
-	Form         string   `json:"form"`
-	FileDate     string   `json:"file_date"`
-	Ciks         []string `json:"ciks"`
-	BizLocations []string `json:"biz_locations"`
-	FileNum      []string `json:"file_num"`
-	FilmNum      []string `json:"film_num"`
+	DisplayNames    []string `json:"display_names"`
+	RootForm        string   `json:"root_form"`
+	Form            string   `json:"form"`
+	FileDate        string   `json:"file_date"`
+	Ciks            []string `json:"ciks"`
+	BizLocations    []string `json:"biz_locations"`
+	FileNum         []string `json:"file_num"`
+	FilmNum         []string `json:"film_num"`
+	FileType        string   `json:"file_type"`
+	FileDescription string   `json:"file_description"`
 }
 
 type Item struct {
@@ -124,6 +126,8 @@ func monitorEdgar(client *client.ClientFactory) {
 				rootForm := _source.RootForm
 				form := _source.Form
 				fileDate := _source.FileDate
+				fileType := _source.FileType
+				fileDescription := _source.FileDescription
 				displayName := _source.DisplayNames[j]
 				cik := _source.Ciks[j]
 				bizLocation := _source.BizLocations[j]
@@ -158,13 +162,13 @@ func monitorEdgar(client *client.ClientFactory) {
 					filmNum := _source.FilmNum[i]
 					fileNumURL := fmt.Sprintf("https://www.sec.gov/cgi-bin/browse-edgar/?filenum=%s&action=getcompany", fileNum)
 
-					client.Logger.Debugf("rootForm: %s, form: %s, fileDate: %s, displayName: %s, cik: %s, bizLocation: %s, fileNum: %s, filmNum: %s, rootFormURL: %s, fileNumURL: %s", rootForm, form, fileDate, displayName, cik, bizLocation, fileNum, filmNum, rootFormURL, fileNumURL)
+					client.Logger.Debugf("rootForm: %s, form: %s, fileDate: %s, displayName: %s, cik: %s, bizLocation: %s, fileNum: %s, filmNum: %s, fileType: %s, rootFormURL: %s, fileNumURL: %s", rootForm, form, fileDate, displayName, cik, bizLocation, fileNum, filmNum, fileType, fileDescription, rootFormURL, fileNumURL)
 
 					embed := &discordgo.MessageEmbed{
 						Fields: []*discordgo.MessageEmbedField{
 							{
 								Name:  "Form & File",
-								Value: fmt.Sprintf("[%s](%s)", form, rootFormURL),
+								Value: fmt.Sprintf("[%s - %s (%s)](%s)", form, fileType, fileDescription, rootFormURL),
 							},
 							{
 								Name:  "Filed",

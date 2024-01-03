@@ -19,6 +19,7 @@ import (
 type Source struct {
 	DisplayNames []string `json:"display_names"`
 	RootForm     string   `json:"root_form"`
+	Form         string   `json:"form"`
 	FileDate     string   `json:"file_date"`
 	Ciks         []string `json:"ciks"`
 	BizLocations []string `json:"biz_locations"`
@@ -121,6 +122,7 @@ func monitorEdgar(client *client.ClientFactory) {
 				_ids := strings.Split(item.ID, ":")
 
 				rootForm := _source.RootForm
+				form := _source.Form
 				fileDate := _source.FileDate
 				displayName := _source.DisplayNames[j]
 				cik := _source.Ciks[j]
@@ -146,8 +148,8 @@ func monitorEdgar(client *client.ClientFactory) {
 					continue
 				}
 
-				if _source.RootForm != "S-1" {
-					client.Logger.Debugf("Root form is not S-1: %v", _source.RootForm)
+				if _source.RootForm != "S-1" || _source.RootForm != "S-3" {
+					client.Logger.Debugf("Unexpected root form : %v", _source.RootForm)
 					continue
 				}
 
@@ -156,13 +158,13 @@ func monitorEdgar(client *client.ClientFactory) {
 					filmNum := _source.FilmNum[i]
 					fileNumURL := fmt.Sprintf("https://www.sec.gov/cgi-bin/browse-edgar/?filenum=%s&action=getcompany", fileNum)
 
-					client.Logger.Debugf("rootForm: %s, fileDate: %s, displayName: %s, cik: %s, bizLocation: %s, fileNum: %s, filmNum: %s, rootFormURL: %s, fileNumURL: %s", rootForm, fileDate, displayName, cik, bizLocation, fileNum, filmNum, rootFormURL, fileNumURL)
+					client.Logger.Debugf("rootForm: %s, form: %s, fileDate: %s, displayName: %s, cik: %s, bizLocation: %s, fileNum: %s, filmNum: %s, rootFormURL: %s, fileNumURL: %s", rootForm, form, fileDate, displayName, cik, bizLocation, fileNum, filmNum, rootFormURL, fileNumURL)
 
 					embed := &discordgo.MessageEmbed{
 						Fields: []*discordgo.MessageEmbedField{
 							{
 								Name:  "Form & File",
-								Value: fmt.Sprintf("[%s](%s)", rootForm, rootFormURL),
+								Value: fmt.Sprintf("[%s](%s)", form, rootFormURL),
 							},
 							{
 								Name:  "Filed",

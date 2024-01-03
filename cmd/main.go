@@ -77,8 +77,10 @@ func monitorEdgar(client *client.ClientFactory) {
 			client.Logger.Errorf("Failed to send request: %v", err)
 			return
 		}
+
+		// Their API returns error most of the time.
 		if resp.StatusCode != 200 {
-			client.Logger.Errorf("Failed to get response: %v", resp.StatusCode)
+			client.Logger.Debugf("Failed to get response: %v", resp.StatusCode)
 			return
 		}
 

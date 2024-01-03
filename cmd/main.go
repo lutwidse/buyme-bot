@@ -53,7 +53,8 @@ func monitorEdgar(client *client.ClientFactory) {
 	processedItems := make(map[string]bool)
 
 	loop := func(startdt string, enddt string) {
-		urlStr := fmt.Sprintf("https://efts.sec.gov/LATEST/search-index?q=BTC&dateRange=custom&startdt=%s&enddt=%s", startdt, enddt)
+		// Without category=form-cat5, some forms are doesn't show up.
+		urlStr := fmt.Sprintf("https://efts.sec.gov/LATEST/search-index?q=BTC&dateRange=custom&category=form-cat5&startdt=%s&enddt=%s", startdt, enddt)
 		req, err := http.NewRequest("GET", urlStr, nil)
 		if err != nil {
 			client.Logger.Errorf("Failed to create request: %v", err)

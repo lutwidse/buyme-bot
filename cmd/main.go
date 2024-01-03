@@ -99,7 +99,7 @@ func monitorEdgar(client *client.ClientFactory) {
 			But it's okay, we're checking if start date is before file date.
 			We don't want to miss any update.
 		*/
-		if len(processedItems) == 1 {
+		if len(processedItems) == 0 {
 			for _, item := range result.Hits.Hits {
 				processedItems[item.ID] = true
 				client.Logger.Debugf("Added to processed (init): %s", item.ID)
@@ -140,7 +140,7 @@ func monitorEdgar(client *client.ClientFactory) {
 				}
 
 				if !startdtTime.After(fileDateTime) {
-					client.Logger.Debugf("File date is not before start date: %v", fileDateTime)
+					client.Logger.Debugf("File date is not after start date: %v", fileDateTime)
 					continue
 				}
 
@@ -217,7 +217,7 @@ func monitorEdgar(client *client.ClientFactory) {
 
 	for {
 		now := time.Now()
-		startdt := now.AddDate(0, 0, -30).Format("2006-01-02")
+		startdt := now.AddDate(0, 0, -1).Format("2006-01-02")
 		enddt := now.AddDate(0, 0, 1).Format("2006-01-02")
 
 		for i := 0; i < 60*60; i++ {

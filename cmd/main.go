@@ -216,7 +216,7 @@ func monitorEdgar(client *client.ClientFactory) {
 	}
 
 	for {
-		now := time.Now()
+		now := time.Now().UTC()
 		startdt := now.AddDate(0, 0, -1).Format("2006-01-02")
 		enddt := now.AddDate(0, 0, 1).Format("2006-01-02")
 

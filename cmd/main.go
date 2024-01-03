@@ -52,6 +52,12 @@ func main() {
 func monitorEdgar(client *client.ClientFactory) {
 	processedItems := make(map[string]bool)
 
+	validRootForms := map[string]bool{
+		"S-1":     true,
+		"S-3":     true,
+		"8-A12B":  true,
+	}
+
 	loop := func(startdt string, enddt string) {
 		// Without category=form-cat5, some forms are doesn't show up.
 		urlStr := fmt.Sprintf("https://efts.sec.gov/LATEST/search-index?q=BTC&dateRange=custom&category=form-cat5&startdt=%s&enddt=%s", startdt, enddt)
@@ -152,8 +158,9 @@ func monitorEdgar(client *client.ClientFactory) {
 					client.Logger.Debugf("File date is not after start date: %v", fileDateTime)
 					continue
 				}
-
-				if _source.RootForm != "S-1" || _source.RootForm != "S-3" || _source.RootForm != "8-A12B" {
+				
+				// Limiting the scope of rootForm in the request parameter might be better.
+				if !validRootForms[_source.RootForm] {
 					client.Logger.Debugf("Unexpected root form : %v", _source.RootForm)
 					continue
 				}
@@ -212,7 +219,7 @@ func monitorEdgar(client *client.ClientFactory) {
 						client.Logger.Errorf("Error sending mention message: ", err)
 					}
 
-					// We use ChannelMessageSendEmbed instead of Embeds because both functions handle Embeds one by one.
+					// We use ChannelMessageSendEmbed instead of Embeds because both functions handle Embed one by one.
 					_, err = client.Discord.ChannelMessageSendEmbed(client.Config.ConfigData.Discord.ChannelID, embed)
 					if err != nil {
 						client.Logger.Errorf("Error sending embed: ", err)

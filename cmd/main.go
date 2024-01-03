@@ -153,7 +153,7 @@ func monitorEdgar(client *client.ClientFactory) {
 					continue
 				}
 
-				if _source.RootForm != "S-1" || _source.RootForm != "S-3" {
+				if _source.RootForm != "S-1" || _source.RootForm != "S-3" || _source.RootForm != "8-A12B" {
 					client.Logger.Debugf("Unexpected root form : %v", _source.RootForm)
 					continue
 				}

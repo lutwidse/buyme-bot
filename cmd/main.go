@@ -100,9 +100,9 @@ func monitorEdgar(client *client.ClientFactory) {
 
 		/*
 			Initialize processedItems only once to prevent notifications on the first run.
-			This is called only once. even if all the loops within an hour complete, it will NEVER be called next time.
-			Their API weirdly returns the previous items that are not in the date range we passed.
-			But it's okay, we're checking if start date is before file date.
+			This is called only once, NEVER called next time.
+			Their API weirdly returns the previous items in the last day of the month that are not in the date range we passed.
+			But it's okay, we're checking if the file date is after start date.
 			We don't want to miss any update.
 		*/
 		if len(processedItems) == 0 {
@@ -225,13 +225,10 @@ func monitorEdgar(client *client.ClientFactory) {
 	}
 
 	for {
-		now := time.Now().UTC()
-		startdt := now.AddDate(0, 0, -1).Format("2006-01-02")
-		enddt := now.AddDate(0, 0, 1).Format("2006-01-02")
-
-		for i := 0; i < 60*60; i++ {
+			now := time.Now().UTC()
+			startdt := now.AddDate(0, 0, -1).Format("2006-01-02")
+			enddt := now.AddDate(0, 0, 1).Format("2006-01-02")
 			loop(startdt, enddt)
 			time.Sleep(1 * time.Second)
-		}
 	}
 }

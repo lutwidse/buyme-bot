@@ -53,14 +53,22 @@ func monitorEdgar(client *client.ClientFactory) {
 	processedItems := make(map[string]bool)
 
 	validRootForms := map[string]bool{
-		"S-1":     true,
-		"S-3":     true,
-		"8-A12B":  true,
+		"S-1":    true,
+		"S-3":    true,
+		"8-A12B": true,
 	}
 
 	loop := func(startdt string, enddt string) {
-		// Without category=form-cat5, some forms are doesn't show up.
-		urlStr := fmt.Sprintf("https://efts.sec.gov/LATEST/search-index?q=BTC&dateRange=custom&category=form-cat5&startdt=%s&enddt=%s", startdt, enddt)
+		values := url.Values{}
+		values.Set("q", "BTC")
+		values.Set("dateRange", "custom")
+		values.Set("category", "form-cat5")
+		values.Set("startdt", startdt)
+		values.Set("enddt", enddt)
+		values.Set("forms", "10-12B,10-12G,18-12B,20FR12B,20FR12G,40-24B2,40FR12B,40FR12G,424A,424B1,424B2,424B3,424B4,424B5,424B7,424B8,424H,425,485APOS,485BPOS,485BXT,487,497,497J,497K,8-A12B,8-A12G,AW,AW WD,DEL AM,DRS,F-1,F-10,F-10EF,F-10POS,F-3,F-3ASR,F-3D,F-3DPOS,F-3MEF,F-4,F-4 POS,F-4MEF,F-6,F-6 POS,F-6EF,F-7,F-7 POS,F-8,F-8 POS,F-80,F-80POS,F-9,F-9 POS,F-N,F-X,FWP,N-2,POS AM,POS EX,POS462B,POS462C,POSASR,RW,RW WD,S-1,S-11,S-11MEF,S-1MEF,S-20,S-3,S-3ASR,S-3D,S-3DPOS,S-3MEF,S-4,S-4 POS,S-4EF,S-4MEF,S-6,S-8,S-8 POS,S-B,S-BMEF,SF-1,SF-3,SUPPL,UNDER")
+
+		baseURL := "https://efts.sec.gov/LATEST/search-index"
+		urlStr := fmt.Sprintf("%s?%s", baseURL, values.Encode())
 		req, err := http.NewRequest("GET", urlStr, nil)
 		if err != nil {
 			client.Logger.Errorf("Failed to create request: %v", err)
@@ -158,7 +166,7 @@ func monitorEdgar(client *client.ClientFactory) {
 					client.Logger.Debugf("File date is not after start date: %v", fileDateTime)
 					continue
 				}
-				
+
 				// Limiting the scope of rootForm in the request parameter might be better.
 				if !validRootForms[_source.RootForm] {
 					client.Logger.Debugf("Unexpected root form : %v", _source.RootForm)
@@ -232,10 +240,10 @@ func monitorEdgar(client *client.ClientFactory) {
 	}
 
 	for {
-			now := time.Now().UTC()
-			startdt := now.AddDate(0, 0, -1).Format("2006-01-02")
-			enddt := now.AddDate(0, 0, 1).Format("2006-01-02")
-			loop(startdt, enddt)
-			time.Sleep(1 * time.Second)
+		now := time.Now().UTC()
+		startdt := now.AddDate(0, 0, -1).Format("2006-01-02")
+		enddt := now.AddDate(0, 0, 1).Format("2006-01-02")
+		loop(startdt, enddt)
+		time.Sleep(1 * time.Second)
 	}
 }

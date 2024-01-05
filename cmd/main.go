@@ -163,7 +163,7 @@ func monitorEdgar(client *client.ClientFactory) {
 					continue
 				}
 
-				if !startdtTime.After(fileDateTime) {
+				if !fileDateTime.After(startdtTime) {
 					client.Logger.Debugf("File date is not after start date: %v", fileDateTime)
 					continue
 				}

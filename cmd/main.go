@@ -59,16 +59,17 @@ func monitorEdgar(client *client.ClientFactory) {
 	}
 
 	loop := func(startdt string, enddt string) {
-		values := url.Values{}
-		values.Set("q", "BTC")
-		values.Set("dateRange", "custom")
-		values.Set("category", "form-cat5")
-		values.Set("startdt", startdt)
-		values.Set("enddt", enddt)
-		values.Set("forms", "10-12B,10-12G,18-12B,20FR12B,20FR12G,40-24B2,40FR12B,40FR12G,424A,424B1,424B2,424B3,424B4,424B5,424B7,424B8,424H,425,485APOS,485BPOS,485BXT,487,497,497J,497K,8-A12B,8-A12G,AW,AW WD,DEL AM,DRS,F-1,F-10,F-10EF,F-10POS,F-3,F-3ASR,F-3D,F-3DPOS,F-3MEF,F-4,F-4 POS,F-4MEF,F-6,F-6 POS,F-6EF,F-7,F-7 POS,F-8,F-8 POS,F-80,F-80POS,F-9,F-9 POS,F-N,F-X,FWP,N-2,POS AM,POS EX,POS462B,POS462C,POSASR,RW,RW WD,S-1,S-11,S-11MEF,S-1MEF,S-20,S-3,S-3ASR,S-3D,S-3DPOS,S-3MEF,S-4,S-4 POS,S-4EF,S-4MEF,S-6,S-8,S-8 POS,S-B,S-BMEF,SF-1,SF-3,SUPPL,UNDER")
-
+		queryParams := []string{
+			"q=" + url.QueryEscape("BTC, Bitcoin"),
+			"dateRange=custom",
+			"category=form-cat5",
+			"startdt=" + url.QueryEscape(startdt),
+			"enddt=" + url.QueryEscape(enddt),
+			"forms=" + url.QueryEscape("10-12B,10-12G,18-12B,20FR12B,20FR12G,40-24B2,40FR12B,40FR12G,424A,424B1,424B2,424B3,424B4,424B5,424B7,424B8,424H,425,485APOS,485BPOS,485BXT,487,497,497J,497K,8-A12B,8-A12G,AW,AW WD,DEL AM,DRS,F-1,F-10,F-10EF,F-10POS,F-3,F-3ASR,F-3D,F-3DPOS,F-3MEF,F-4,F-4 POS,F-4MEF,F-6,F-6 POS,F-6EF,F-7,F-7 POS,F-8,F-8 POS,F-80,F-80POS,F-9,F-9 POS,F-N,F-X,FWP,N-2,POS AM,POS EX,POS462B,POS462C,POSASR,RW,RW WD,S-1,S-11,S-11MEF,S-1MEF,S-20,S-3,S-3ASR,S-3D,S-3DPOS,S-3MEF,S-4,S-4 POS,S-4EF,S-4MEF,S-6,S-8,S-8 POS,S-B,S-BMEF,SF-1,SF-3,SUPPL,UNDER"),
+		}
+		
 		baseURL := "https://efts.sec.gov/LATEST/search-index"
-		urlStr := fmt.Sprintf("%s?%s", baseURL, values.Encode())
+		urlStr := baseURL + "?" + strings.Join(queryParams, "&")
 		req, err := http.NewRequest("GET", urlStr, nil)
 		if err != nil {
 			client.Logger.Errorf("Failed to create request: %v", err)

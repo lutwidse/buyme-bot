@@ -67,7 +67,7 @@ func monitorEdgar(client *client.ClientFactory) {
 			"enddt=" + url.QueryEscape(enddt),
 			"forms=" + url.QueryEscape("10-12B,10-12G,18-12B,20FR12B,20FR12G,40-24B2,40FR12B,40FR12G,424A,424B1,424B2,424B3,424B4,424B5,424B7,424B8,424H,425,485APOS,485BPOS,485BXT,487,497,497J,497K,8-A12B,8-A12G,AW,AW WD,DEL AM,DRS,F-1,F-10,F-10EF,F-10POS,F-3,F-3ASR,F-3D,F-3DPOS,F-3MEF,F-4,F-4 POS,F-4MEF,F-6,F-6 POS,F-6EF,F-7,F-7 POS,F-8,F-8 POS,F-80,F-80POS,F-9,F-9 POS,F-N,F-X,FWP,N-2,POS AM,POS EX,POS462B,POS462C,POSASR,RW,RW WD,S-1,S-11,S-11MEF,S-1MEF,S-20,S-3,S-3ASR,S-3D,S-3DPOS,S-3MEF,S-4,S-4 POS,S-4EF,S-4MEF,S-6,S-8,S-8 POS,S-B,S-BMEF,SF-1,SF-3,SUPPL,UNDER"),
 		}
-		
+
 		baseURL := "https://efts.sec.gov/LATEST/search-index"
 		urlStr := baseURL + "?" + strings.Join(queryParams, "&")
 		req, err := http.NewRequest("GET", urlStr, nil)
@@ -129,15 +129,25 @@ func monitorEdgar(client *client.ClientFactory) {
 
 		for _, item := range result.Hits.Hits {
 			_source := item.Source
-			for j := range _source.DisplayNames {
-				client.Logger.Debugf("ID: %s", item.ID)
+			_id := item.ID
 
-				if processedItems[item.ID] {
-					client.Logger.Debugf("Already processed: %s", item.ID)
+			for j := range _source.DisplayNames {
+				client.Logger.Debugf("ID: %s", _id)
+
+				if processedItems[_id] {
+					client.Logger.Debugf("Already processed: %s", _id)
 					continue
 				}
 
-				_ids := strings.Split(item.ID, ":")
+				// Limiting the scope of rootForm in the request parameter might be better.
+				if !validRootForms[_source.RootForm] {
+					client.Logger.Debugf("Unexpected root form : %v", _source.RootForm)
+					processedItems[_id] = true
+					client.Logger.Debugf("Added to processed (unexpected root form): %s", _id)
+					continue
+				}
+
+				_ids := strings.Split(_id, ":")
 
 				rootForm := _source.RootForm
 				form := _source.Form
@@ -165,12 +175,6 @@ func monitorEdgar(client *client.ClientFactory) {
 
 				if !fileDateTime.After(startdtTime) {
 					client.Logger.Debugf("File date is not after start date: %v", fileDateTime)
-					continue
-				}
-
-				// Limiting the scope of rootForm in the request parameter might be better.
-				if !validRootForms[_source.RootForm] {
-					client.Logger.Debugf("Unexpected root form : %v", _source.RootForm)
 					continue
 				}
 
@@ -233,8 +237,8 @@ func monitorEdgar(client *client.ClientFactory) {
 					if err != nil {
 						client.Logger.Errorf("Error sending embed: ", err)
 					}
-					processedItems[item.ID] = true
-					client.Logger.Debugf("Added to processed: %s", item.ID)
+					processedItems[_id] = true
+					client.Logger.Debugf("Added to processed: %s", _id)
 				}
 			}
 		}

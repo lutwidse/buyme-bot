@@ -58,13 +58,18 @@ func monitorEdgar(client *client.ClientFactory) {
 		"8-A12B": true,
 	}
 
+	searchTerms := []string{"BTC", "Bitcoin"}
+
 	loop := func(startdt string, enddt string) {
 		queryParams := []string{
-			"q=" + url.QueryEscape("BTC, Bitcoin"),
+			// API accepts sql query
+			"q=" + url.QueryEscape(strings.Join(searchTerms, " OR ")),
 			"dateRange=custom",
+			// Registration statements and prospectuses
 			"category=form-cat5",
 			"startdt=" + url.QueryEscape(startdt),
 			"enddt=" + url.QueryEscape(enddt),
+			// form-cat5
 			"forms=" + url.QueryEscape("10-12B,10-12G,18-12B,20FR12B,20FR12G,40-24B2,40FR12B,40FR12G,424A,424B1,424B2,424B3,424B4,424B5,424B7,424B8,424H,425,485APOS,485BPOS,485BXT,487,497,497J,497K,8-A12B,8-A12G,AW,AW WD,DEL AM,DRS,F-1,F-10,F-10EF,F-10POS,F-3,F-3ASR,F-3D,F-3DPOS,F-3MEF,F-4,F-4 POS,F-4MEF,F-6,F-6 POS,F-6EF,F-7,F-7 POS,F-8,F-8 POS,F-80,F-80POS,F-9,F-9 POS,F-N,F-X,FWP,N-2,POS AM,POS EX,POS462B,POS462C,POSASR,RW,RW WD,S-1,S-11,S-11MEF,S-1MEF,S-20,S-3,S-3ASR,S-3D,S-3DPOS,S-3MEF,S-4,S-4 POS,S-4EF,S-4MEF,S-6,S-8,S-8 POS,S-B,S-BMEF,SF-1,SF-3,SUPPL,UNDER"),
 		}
 
@@ -97,7 +102,7 @@ func monitorEdgar(client *client.ClientFactory) {
 			return
 		}
 
-		// Their API returns error most of the time.
+		// API returns error most of the time
 		if resp.StatusCode != 200 {
 			client.Logger.Debugf("Failed to get response: %v", resp.StatusCode)
 			return
@@ -116,9 +121,10 @@ func monitorEdgar(client *client.ClientFactory) {
 		/*
 			Initialize processedItems only once to prevent notifications on the first run.
 			This is called only once, NEVER called next time.
-			Their API weirdly returns the previous items in the last day of the month that are not in the date range we passed.
-			But it's okay, we're checking if the file date is after start date.
-			We don't want to miss any update.
+
+			API returns the previous items that are not in the date range we passed on the last day of the month.
+			I'm not sure if this is a form update or not. thus, we will check if the file date is after the start date.
+			We don't want to miss any updates.
 		*/
 		if len(processedItems) == 0 {
 			for _, item := range result.Hits.Hits {
@@ -139,7 +145,7 @@ func monitorEdgar(client *client.ClientFactory) {
 					continue
 				}
 
-				// Limiting the scope of rootForm in the request parameter might be better.
+				// Limiting the scope of rootForm in the request parameter might be better
 				if !validRootForms[_source.RootForm] {
 					client.Logger.Debugf("Unexpected root form : %v", _source.RootForm)
 					processedItems[_id] = true
@@ -232,7 +238,7 @@ func monitorEdgar(client *client.ClientFactory) {
 						client.Logger.Errorf("Error sending mention message: ", err)
 					}
 
-					// We use ChannelMessageSendEmbed instead of Embeds because both functions handle Embed one by one.
+					// We use ChannelMessageSendEmbed instead of Embeds because both functions handle Embed one by one
 					_, err = client.Discord.ChannelMessageSendEmbed(client.Config.ConfigData.Discord.ChannelID, embed)
 					if err != nil {
 						client.Logger.Errorf("Error sending embed: ", err)

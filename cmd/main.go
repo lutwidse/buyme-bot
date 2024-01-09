@@ -244,6 +244,7 @@ func monitorEdgar(client *client.ClientFactory) {
 						client.Logger.Errorf("Error sending embed: ", err)
 					}
 					processedItems[_id] = true
+					client.Logger.Infof("Discord message sent: %s", _id)
 					client.Logger.Debugf("Added to processed: %s", _id)
 				}
 			}

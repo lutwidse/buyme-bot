@@ -2,57 +2,83 @@ package config
 
 import (
 	"os"
-	"path/filepath"
 
+	"github.com/joho/godotenv"
 	"go.uber.org/zap"
-	yaml "gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Logger *zap.SugaredLogger
+	Logger     *zap.SugaredLogger
 	ConfigData *ConfigData
 }
 
 type ConfigData struct {
 	TwoCaptcha struct {
-		Token string `yaml:"token"`
-	} `yaml:"twocaptcha"`
+		Token string
+	}
 	Discord struct {
-		Token     string `yaml:"token"`
-		ChannelID string `yaml:"channel_id"`
-		RoleID    string `yaml:"role_id"`
-	} `yaml:"discord"`
+		Token     string
+		ChannelID string
+		RoleID    string
+	}
 	OpenAI struct {
-		Token string `yaml:"token"`
-	} `yaml:"openai"`
+		Token string
+	}
 	Proxy struct {
-		Host     string `yaml:"host"`
-		Port     string `yaml:"port"`
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-	} `yaml:"proxy"`
+		Host     string
+		Port     string
+		User     string
+		Password string
+	}
 	Setting struct {
-		UserAgent string `yaml:"user_agent"`
+		UserAgent string
 	}
 }
 
 func (c *Config) LoadConfig() error {
-    currentDir, err := os.Getwd()
-    if err != nil {
-        c.Logger.Errorf("Failed to get current directory: %v", err)
-        return err
-    }
-    configPath := filepath.Join(currentDir, "..", "configs", "config.yml")
+	err := godotenv.Load(".env")
+	if err != nil {
+		c.Logger.Errorf("Error loading .env file")
+		return err
+	}
 
-    data, err := os.ReadFile(configPath)
-    if err != nil {
-        return err
-    }
+	c.ConfigData = &ConfigData{
+		TwoCaptcha: struct {
+			Token string
+		}{
+			Token: os.Getenv("TWO_CAPTCHA_TOKEN"),
+		},
+		Discord: struct {
+			Token     string
+			ChannelID string
+			RoleID    string
+		}{
+			Token:     os.Getenv("DISCORD_TOKEN"),
+			ChannelID: os.Getenv("DISCORD_CHANNEL_ID"),
+			RoleID:    os.Getenv("DISCORD_ROLE_ID"),
+		},
+		OpenAI: struct {
+			Token string
+		}{
+			Token: os.Getenv("OPENAI_TOKEN"),
+		},
+		Proxy: struct {
+			Host     string
+			Port     string
+			User     string
+			Password string
+		}{
+			Host:     os.Getenv("PROXY_HOST"),
+			Port:     os.Getenv("PROXY_PORT"),
+			User:     os.Getenv("PROXY_USER"),
+			Password: os.Getenv("PROXY_PASSWORD"),
+		},
+		Setting: struct {
+			UserAgent string
+		}{
+			UserAgent: os.Getenv("USER_AGENT"),
+		},
+	}
 
-    err = yaml.Unmarshal(data, c.ConfigData)
-    if err != nil {
-        return err
-    }
-
-    return nil
+	return nil
 }

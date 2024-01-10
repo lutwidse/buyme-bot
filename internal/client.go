@@ -5,7 +5,9 @@ import (
 	"buyme-bot/pkg/config"
 	"buyme-bot/pkg/proxy"
 	"buyme-bot/pkg/util"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 	"go.uber.org/zap"
@@ -51,7 +53,14 @@ func (cf *ClientFactory) Init() {
 
 func (cf *ClientFactory) newConfig() *config.Config {
 	Config := &config.Config{Logger: cf.Logger, ConfigData: &config.ConfigData{}}
-	Config.LoadConfig()
+	err := Config.LoadConfig()
+	if err != nil {
+		cf.Logger.Errorf("Error loading .env file")
+		cf.Logger.Infof("Press 'Enter' to exit...")
+		var input string
+		fmt.Scanln(&input)
+		os.Exit(1)
+	}
 	return Config
 }
 

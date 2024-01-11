@@ -121,10 +121,6 @@ func monitorEdgar(client *client.ClientFactory) {
 		/*
 			Initialize processedItems only once to prevent notifications on the first run.
 			This is called only once, NEVER called next time.
-
-			API returns the previous items that are not in the date range we passed on the last day of the month.
-			I'm not sure if this is a form update or not. thus, we will check if the file date is after the start date.
-			We don't want to miss any updates.
 		*/
 		if len(processedItems) == 0 {
 			for _, item := range result.Hits.Hits {
@@ -167,22 +163,6 @@ func monitorEdgar(client *client.ClientFactory) {
 				idParamWhat := strings.ReplaceAll(_ids[0], "-", "")
 				idParamName := _ids[1]
 				rootFormURL := fmt.Sprintf("https://www.sec.gov/Archives/edgar/data/%s/%s/%s", cik[3:], idParamWhat, idParamName)
-
-				fileDateTime, err := time.Parse("2006-01-02", fileDate)
-				if err != nil {
-					client.Logger.Errorf("Failed to parse date: %v", err)
-					continue
-				}
-				startdtTime, err := time.Parse("2006-01-02", startdt)
-				if err != nil {
-					client.Logger.Errorf("Failed to parse date: %v", err)
-					continue
-				}
-
-				if !fileDateTime.After(startdtTime) {
-					client.Logger.Debugf("File date is not after start date: %v", fileDateTime)
-					continue
-				}
 
 				for i := 0; i < len(_source.FileNum); i++ {
 					fileNum := _source.FileNum[i]
@@ -252,10 +232,17 @@ func monitorEdgar(client *client.ClientFactory) {
 	}
 
 	for {
+		/*
+		Files dated earlier than the same day may be appear.
+		We thought that was a bug, but it's not.
+		There is a delay until the update is completed.
+		A threshold of some number of days is required.
+		*/
 		now := time.Now().UTC()
-		startdt := now.AddDate(0, 0, -1).Format("2006-01-02")
+		startdt := now.AddDate(0, 0, -3).Format("2006-01-02")
 		enddt := now.AddDate(0, 0, 1).Format("2006-01-02")
 		loop(startdt, enddt)
+
 		time.Sleep(1 * time.Second)
 	}
 }
